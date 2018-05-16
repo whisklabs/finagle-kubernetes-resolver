@@ -10,6 +10,10 @@ scalacOptions ++= Seq("-feature", "-deprecation", "-language:implicitConversions
 
 publishMavenStyle := true
 
+sonatypeProfileName := "com.whisk"
+
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
+
 homepage := Some(url("https://github.com/whisklabs/finagle-kubernetes-resolver"))
 
 scmInfo := Some(
