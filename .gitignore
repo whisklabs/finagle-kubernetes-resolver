@@ -1,0 +1,12 @@
+.DS_Store
+
+# Idea
+*.iml
+.idea
+
+project/sbt-launch-*.jar
+*.pyc
+
+target/
+build/
+out/
