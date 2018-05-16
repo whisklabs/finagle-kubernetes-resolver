@@ -34,5 +34,7 @@ publishTo := Some(Opts.resolver.sonatypeStaging)
 
 libraryDependencies ++= Seq(
   "com.twitter" %% "finagle-http" % "18.5.0",
-  "io.circe" %% "circe-core" % "0.9.3"
+  "io.circe" %% "circe-core" % "0.9.3",
+  "io.circe" %% "circe-parser" % "0.9.3",
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
 )
