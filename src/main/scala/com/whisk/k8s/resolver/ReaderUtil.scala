@@ -9,7 +9,7 @@ object ReaderUtil {
     * Read infinite streaming response
     * This future will be resolved only in case of error
     */
-  def readStream[T](reader: Reader, parseChunk: Buf => Either[Throwable, T])(
+  def readStream[T](reader: Reader[Buf], parseChunk: Buf => Either[Throwable, T])(
       callback: T => Unit): Future[Unit] = {
     val promise = Promise[Unit]
 
