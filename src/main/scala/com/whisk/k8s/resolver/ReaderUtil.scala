@@ -20,7 +20,7 @@ object ReaderUtil {
 
     def readNextChunk(): Unit = {
       reader
-        .read(Int.MaxValue)
+        .read()
         .onSuccess {
           case Some(buf) =>
             parseChunk(buf) match {

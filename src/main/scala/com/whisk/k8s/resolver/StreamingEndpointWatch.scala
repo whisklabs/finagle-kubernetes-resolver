@@ -1,6 +1,6 @@
 package com.whisk.k8s.resolver
 
-import com.twitter.conversions.time._
+import com.twitter.conversions.DurationOps._
 import com.twitter.finagle.Address
 import com.twitter.finagle.util.DefaultTimer
 import com.twitter.logging.Logger
