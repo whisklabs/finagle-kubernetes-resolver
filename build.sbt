@@ -2,7 +2,7 @@ organization := "com.whisk"
 
 name := "finagle-kubernetes-resolver"
 
-version := "0.1.3"
+version := "0.1.4"
 
 scalaVersion := "2.12.8"
 
