@@ -22,7 +22,7 @@ class PollingEndpointWatch(interval: Duration,
         case Return((_, addresses)) =>
           event.notify(addresses)
         case Throw(e) =>
-          logger.error(e, "Error in polling")
+          logger.error(e, s"Error in polling ${endpoint.serviceName}")
       }
       Await.result(future)
     }
