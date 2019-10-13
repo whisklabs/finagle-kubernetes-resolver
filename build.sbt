@@ -4,7 +4,9 @@ name := "finagle-kubernetes-resolver"
 
 version := "0.1.6"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.12.10"
+
+//crossScalaVersions := Seq("2.13.1", "2.12.10")
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-language:implicitConversions")
 
@@ -37,8 +39,8 @@ developers := List(
 publishTo := Some(Opts.resolver.sonatypeStaging)
 
 libraryDependencies ++= Seq(
-  "com.twitter" %% "finagle-http" % "19.7.0",
-  "io.circe" %% "circe-core" % "0.11.1",
-  "io.circe" %% "circe-parser" % "0.11.1",
-  "org.scalatest" %% "scalatest" % "3.0.6" % "test",
+  "com.twitter" %% "finagle-http" % "19.10.0",
+  "io.circe" %% "circe-core" % "0.12.2",
+  "io.circe" %% "circe-parser" % "0.12.2",
+  "org.scalatest" %% "scalatest" % "3.0.8" % "test",
 )
