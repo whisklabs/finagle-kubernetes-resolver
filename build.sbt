@@ -1,12 +1,16 @@
+val finagleRev = "20.4.1"
+
+val circeRev = "0.13.0"
+
 organization := "com.whisk"
 
 name := "finagle-kubernetes-resolver"
 
-version := "0.1.7"
+version := "0.2.0"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.12.11"
 
-//crossScalaVersions := Seq("2.13.1", "2.12.10")
+crossScalaVersions := Seq("2.13.2", "2.12.11")
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-language:implicitConversions")
 
@@ -39,8 +43,8 @@ developers := List(
 publishTo := Some(Opts.resolver.sonatypeStaging)
 
 libraryDependencies ++= Seq(
-  "com.twitter" %% "finagle-http" % "19.10.0",
-  "io.circe" %% "circe-core" % "0.12.2",
-  "io.circe" %% "circe-parser" % "0.12.2",
+  "com.twitter" %% "finagle-http" % finagleRev,
+  "io.circe" %% "circe-core" % circeRev,
+  "io.circe" %% "circe-parser" % circeRev,
   "org.scalatest" %% "scalatest" % "3.0.8" % "test",
 )
