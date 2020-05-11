@@ -5,11 +5,11 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 
 import com.twitter.finagle._
-import com.twitter.finagle.http.{Request, Response}
+import com.twitter.finagle.http.{Chunk, Request, Response}
 import com.twitter.finagle.ssl.TrustCredentials
 import com.twitter.finagle.ssl.client.SslClientConfiguration
 import com.twitter.finagle.transport.Transport
-import com.twitter.io.Buf
+import com.twitter.io.{Buf, Reader}
 import com.twitter.logging.Logger
 import com.twitter.util._
 import io.circe
@@ -19,10 +19,15 @@ import io.circe.parser.decode
 object K8sApiModel {
 
   case class Address(ip: String)
+
   case class Port(port: Int, name: Option[String])
+
   case class Subset(addresses: Seq[Address], ports: Seq[Port])
+
   case class Metadata(resourceVersion: String)
+
   case class Endpoints(subsets: Seq[Subset], metadata: Metadata)
+
   case class Change(`object`: Endpoints)
 
   implicit val addressDecoder: Decoder[Address] = Decoder.forProduct1("ip")(Address)
@@ -63,23 +68,23 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
     val service = endpoint.serviceName
     val url = s"/api/v1/namespaces/$namespace/endpoints/$service"
 
-    client(http.Request(http.Method.Get, url)).flatMap(response => {
-      val errorOrAddresses = K8sApiModel
-        .parseEndpoints(response.content)
-        .map(buildAddresses)
-      errorOrAddresses match {
-        case Left(error) => Future.exception(error)
-        case Right((version, addresses)) =>
-          Future.value((version, addresses))
-      }
-    })
+    client(http.Request(http.Method.Get, url)).flatMap { response =>
+      getContent(response)
+        .map(K8sApiModel.parseEndpoints)
+        .map(_.map(buildAddresses))
+        .flatMap {
+          case Left(error) => Future.exception(error)
+          case Right((version, addresses)) =>
+            Future.value((version, addresses))
+        }
+    }
   }
 
   /**
     * Watch changes for pods ip addresses for a endpoint of service defined in Kubernetes
     */
   def watchAddresses(endpoint: Endpoint, resourceVersion: String)(
-      callback: Seq[Address] => Unit): Future[_] = {
+    callback: Seq[Address] => Unit): Future[_] = {
     val namespace = endpoint.namespace
     val service = endpoint.serviceName
     val url = s"/api/v1/watch/namespaces/$namespace/endpoints/$service"
@@ -91,6 +96,29 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
       _ <- ReaderUtil.readStream(response.reader, parseChunk)(callback)
     } yield {}
   }
+
+  /**
+    * Get content from the Kubernetes. If it's not chunked - get the content directly,
+    * otherwise collect the content and then give it back to decoder as
+    * circle.io can't process stream content.
+    */
+  private def getContent(response: Response): Future[Buf] = {
+    if (response.isChunked) {
+
+      //TODO: Trampoline this if recursion goes too deep
+      def read(reader: Reader[Chunk], lastContent: Buf): Future[Buf] = reader.read().flatMap {
+        case Some(chunk) =>
+          val buf = lastContent.concat(chunk.content)
+          read(reader, buf)
+        case None => Future.value(lastContent)
+      }
+
+      read(response.chunkReader, Buf.Empty)
+    } else {
+      Future.value(response.content)
+    }
+  }
+
 
   private def parseChunk(buf: Buf): Either[circe.Error, Seq[Address]] = {
     K8sApiModel.parseChange(buf).map(change => buildAddresses(change.`object`)._2)
