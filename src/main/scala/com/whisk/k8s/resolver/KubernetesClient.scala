@@ -84,7 +84,7 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
     * Watch changes for pods ip addresses for a endpoint of service defined in Kubernetes
     */
   def watchAddresses(endpoint: Endpoint, resourceVersion: String)(
-    callback: Seq[Address] => Unit): Future[_] = {
+      callback: Seq[Address] => Unit): Future[_] = {
     val namespace = endpoint.namespace
     val service = endpoint.serviceName
     val url = s"/api/v1/watch/namespaces/$namespace/endpoints/$service"
@@ -104,21 +104,11 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
     */
   private def getContent(response: Response): Future[Buf] = {
     if (response.isChunked) {
-
-      //TODO: Trampoline this if recursion goes too deep
-      def read(reader: Reader[Chunk], lastContent: Buf): Future[Buf] = reader.read().flatMap {
-        case Some(chunk) =>
-          val buf = lastContent.concat(chunk.content)
-          read(reader, buf)
-        case None => Future.value(lastContent)
-      }
-
-      read(response.chunkReader, Buf.Empty)
+      Reader.readAll(response.reader)
     } else {
       Future.value(response.content)
     }
   }
-
 
   private def parseChunk(buf: Buf): Either[circe.Error, Seq[Address]] = {
     K8sApiModel.parseChange(buf).map(change => buildAddresses(change.`object`)._2)
