@@ -5,11 +5,11 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 
 import com.twitter.finagle._
-import com.twitter.finagle.http.{Request, Response}
+import com.twitter.finagle.http.{Chunk, Request, Response}
 import com.twitter.finagle.ssl.TrustCredentials
 import com.twitter.finagle.ssl.client.SslClientConfiguration
 import com.twitter.finagle.transport.Transport
-import com.twitter.io.Buf
+import com.twitter.io.{Buf, Reader}
 import com.twitter.logging.Logger
 import com.twitter.util._
 import io.circe
@@ -19,10 +19,15 @@ import io.circe.parser.decode
 object K8sApiModel {
 
   case class Address(ip: String)
+
   case class Port(port: Int, name: Option[String])
+
   case class Subset(addresses: Seq[Address], ports: Seq[Port])
+
   case class Metadata(resourceVersion: String)
+
   case class Endpoints(subsets: Seq[Subset], metadata: Metadata)
+
   case class Change(`object`: Endpoints)
 
   implicit val addressDecoder: Decoder[Address] = Decoder.forProduct1("ip")(Address)
@@ -63,16 +68,16 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
     val service = endpoint.serviceName
     val url = s"/api/v1/namespaces/$namespace/endpoints/$service"
 
-    client(http.Request(http.Method.Get, url)).flatMap(response => {
-      val errorOrAddresses = K8sApiModel
-        .parseEndpoints(response.content)
-        .map(buildAddresses)
-      errorOrAddresses match {
-        case Left(error) => Future.exception(error)
-        case Right((version, addresses)) =>
-          Future.value((version, addresses))
-      }
-    })
+    client(http.Request(http.Method.Get, url)).flatMap { response =>
+      getContent(response)
+        .map(K8sApiModel.parseEndpoints)
+        .map(_.map(buildAddresses))
+        .flatMap {
+          case Left(error) => Future.exception(error)
+          case Right((version, addresses)) =>
+            Future.value((version, addresses))
+        }
+    }
   }
 
   /**
@@ -90,6 +95,19 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
       response <- client(request)
       _ <- ReaderUtil.readStream(response.reader, parseChunk)(callback)
     } yield {}
+  }
+
+  /**
+    * Get content from the Kubernetes. If it's not chunked - get the content directly,
+    * otherwise collect the content and then give it back to decoder as
+    * circle.io can't process stream content.
+    */
+  private def getContent(response: Response): Future[Buf] = {
+    if (response.isChunked) {
+      Reader.readAll(response.reader)
+    } else {
+      Future.value(response.content)
+    }
   }
 
   private def parseChunk(buf: Buf): Either[circe.Error, Seq[Address]] = {
