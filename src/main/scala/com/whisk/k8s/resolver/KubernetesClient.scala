@@ -9,7 +9,7 @@ import com.twitter.finagle.http.{Chunk, Request, Response}
 import com.twitter.finagle.ssl.TrustCredentials
 import com.twitter.finagle.ssl.client.SslClientConfiguration
 import com.twitter.finagle.transport.Transport
-import com.twitter.io.{Buf, Reader}
+import com.twitter.io.{Buf, BufReader, Reader}
 import com.twitter.logging.Logger
 import com.twitter.util._
 import io.circe
@@ -104,7 +104,7 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
     */
   private def getContent(response: Response): Future[Buf] = {
     if (response.isChunked) {
-      Reader.readAll(response.reader)
+      BufReader.readAll(response.reader)
     } else {
       Future.value(response.content)
     }

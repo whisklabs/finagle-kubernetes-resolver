@@ -102,7 +102,7 @@ class KubernetesResolverTest extends FunSuite {
     Time.withCurrentTimeFrozen { timeControl =>
       timeControl.advance(Duration.fromSeconds(5))
       timer.tick()
-      val result = Await.result(addr.changes.filter(_ != Addr.Pending).toFuture)
+      val result = Await.result(addr.changes.filter(_ != Addr.Pending).toFuture())
       assertResult(expected)(result)
     }
   }

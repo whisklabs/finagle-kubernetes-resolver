@@ -11,7 +11,7 @@ object ReaderUtil {
     */
   def readStream[T](reader: Reader[Buf], parseChunk: Buf => Either[Throwable, T])(
       callback: T => Unit): Future[Unit] = {
-    val promise = Promise[Unit]
+    val promise = Promise[Unit]()
 
     def terminate(e: Throwable): Unit = {
       reader.discard()

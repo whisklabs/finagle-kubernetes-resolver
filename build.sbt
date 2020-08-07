@@ -1,4 +1,4 @@
-val finagleRev = "20.4.1"
+val finagleRev = "20.7.0"
 
 val circeRev = "0.13.0"
 
@@ -8,9 +8,9 @@ name := "finagle-kubernetes-resolver"
 
 version := "0.2.0"
 
-scalaVersion := "2.12.11"
+scalaVersion := "2.12.12"
 
-crossScalaVersions := Seq("2.13.2", "2.12.11")
+crossScalaVersions := Seq("2.13.3", "2.12.12")
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-language:implicitConversions")
 
