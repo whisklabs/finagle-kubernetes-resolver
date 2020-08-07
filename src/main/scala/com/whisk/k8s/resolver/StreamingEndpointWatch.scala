@@ -6,9 +6,9 @@ import com.twitter.finagle.util.DefaultTimer
 import com.twitter.logging.Logger
 import com.twitter.util._
 
-class StreamingEndpointWatch(k8sClientFactory: () => KubernetesClient)(implicit timer: Timer =
-                                                                         DefaultTimer)
-    extends EndpointWatch {
+class StreamingEndpointWatch(k8sClientFactory: () => KubernetesClient)(implicit
+    timer: Timer = DefaultTimer
+) extends EndpointWatch {
   private val logger = Logger.get(getClass)
 
   /**

@@ -84,7 +84,8 @@ class KubernetesClient(client: Service[Request, Response]) extends Closable {
     * Watch changes for pods ip addresses for a endpoint of service defined in Kubernetes
     */
   def watchAddresses(endpoint: Endpoint, resourceVersion: String)(
-      callback: Seq[Address] => Unit): Future[_] = {
+      callback: Seq[Address] => Unit
+  ): Future[_] = {
     val namespace = endpoint.namespace
     val service = endpoint.serviceName
     val url = s"/api/v1/watch/namespaces/$namespace/endpoints/$service"
@@ -158,7 +159,9 @@ object KubernetesClient {
       Files.readAllBytes(
         Paths.get(
           "/var/run/secrets/kubernetes.io/serviceaccount/token"
-        )))
+        )
+      )
+    )
     val cert = new File("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
     new KubernetesClient(
@@ -166,14 +169,19 @@ object KubernetesClient {
         .withStreaming(enabled = true)
         .configured(
           Transport.ClientSsl(
-            Some(SslClientConfiguration(
-              hostname = Some(k8sHost),
-              trustCredentials = TrustCredentials.CertCollection(cert)
-            ))))
+            Some(
+              SslClientConfiguration(
+                hostname = Some(k8sHost),
+                trustCredentials = TrustCredentials.CertCollection(cert)
+              )
+            )
+          )
+        )
         .filtered(Filter.mk((req, svc) => {
           req.authorization = s"Bearer $token"
           svc(req)
         }))
-        .newService(s"$k8sHost:$k8sPort"))
+        .newService(s"$k8sHost:$k8sPort")
+    )
   }
 }

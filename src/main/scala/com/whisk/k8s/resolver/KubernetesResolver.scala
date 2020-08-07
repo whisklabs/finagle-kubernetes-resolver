@@ -17,15 +17,19 @@ case class Endpoint(namespace: String, serviceName: String)
 
 class KubernetesResolver(defaultNamespace: String, endpointWatch: EndpointWatch) extends Resolver {
 
-  def this() = this(
-    defaultNamespace = new String(Files.readAllBytes(
-                                    Paths.get(
-                                      "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
-                                    )),
-                                  "utf-8"),
-    endpointWatch =
-      new PollingEndpointWatch(Duration.fromSeconds(3), () => KubernetesClient.fromEnv)
-  )
+  def this() =
+    this(
+      defaultNamespace = new String(
+        Files.readAllBytes(
+          Paths.get(
+            "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+          )
+        ),
+        "utf-8"
+      ),
+      endpointWatch =
+        new PollingEndpointWatch(Duration.fromSeconds(3), () => KubernetesClient.fromEnv)
+    )
 
   private val logger = Logger.get(getClass)
 
@@ -43,22 +47,24 @@ class KubernetesResolver(defaultNamespace: String, endpointWatch: EndpointWatch)
     * for example "prod/product-matching-thrift" or "product-matching-thrift"
     * defaultNamespace is a namespace current service belongs to
     */
-  private def parseArg(arg: String): Try[Endpoint] = Try {
-    def fail() = throw new IllegalArgumentException(
-      s"Endpoint specification " +
-        s"should be 'namespace/serviceName:port' or 'serviceName:port', not '$arg'"
-    )
+  private def parseArg(arg: String): Try[Endpoint] =
+    Try {
+      def fail() =
+        throw new IllegalArgumentException(
+          s"Endpoint specification " +
+            s"should be 'namespace/serviceName:port' or 'serviceName:port', not '$arg'"
+        )
 
-    arg.split("/") match {
-      case Array(namespace, serviceName) =>
-        Endpoint(namespace, serviceName)
+      arg.split("/") match {
+        case Array(namespace, serviceName) =>
+          Endpoint(namespace, serviceName)
 
-      case Array(serviceName) =>
-        Endpoint(defaultNamespace, serviceName)
+        case Array(serviceName) =>
+          Endpoint(defaultNamespace, serviceName)
 
-      case _ => fail()
+        case _ => fail()
+      }
     }
-  }
 
   /**
     * Watch Kubernetes resource to receive changes of requested endpoints

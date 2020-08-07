@@ -5,10 +5,11 @@ import com.twitter.finagle.util.DefaultTimer
 import com.twitter.logging.Logger
 import com.twitter.util._
 
-class PollingEndpointWatch(interval: Duration,
-                           k8sClientFactory: () => KubernetesClient,
-                           timer: Timer = DefaultTimer)
-    extends EndpointWatch {
+class PollingEndpointWatch(
+    interval: Duration,
+    k8sClientFactory: () => KubernetesClient,
+    timer: Timer = DefaultTimer
+) extends EndpointWatch {
 
   private val logger = Logger.get(getClass)
 

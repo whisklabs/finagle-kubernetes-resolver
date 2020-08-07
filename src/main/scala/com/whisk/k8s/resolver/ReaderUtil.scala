@@ -10,7 +10,8 @@ object ReaderUtil {
     * This future will be resolved only in case of error
     */
   def readStream[T](reader: Reader[Buf], parseChunk: Buf => Either[Throwable, T])(
-      callback: T => Unit): Future[Unit] = {
+      callback: T => Unit
+  ): Future[Unit] = {
     val promise = Promise[Unit]()
 
     def terminate(e: Throwable): Unit = {
